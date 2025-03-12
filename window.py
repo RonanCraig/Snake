@@ -59,4 +59,5 @@ def windowWrapper(func):
         try:
             wrapper(func)
         except KeyboardInterrupt:
-            exit(0)
+            curses.curs_set(True)
+            curses.endwin()
