@@ -35,7 +35,7 @@ class Window:
             self.gameWindow.addch(xy[1], xy[0], character)
 
     def clear(self):
-        self.gameWindow.clear()
+        self.gameWindow.erase()
 
     def render(self):
         self.gameWindow.border()
