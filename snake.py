@@ -1,6 +1,8 @@
 
-import time, curses, random
+import time, random
 from curses import wrapper
+from window import Window
+
 
 class Snake:
     def __init__(self):
@@ -42,39 +44,6 @@ class Snake:
     def head(self):
         return self.segments[0]
     
-class Window:
-    def __init__(self):
-        self.windowSize = 20
-        self.gameWindow = curses.newwin(self.windowSize, self.windowSize*2, 5, 5)
-        self.gameWindow.border()
-        self.gameWindow.nodelay(True)
-        self.messageWindow = curses.newwin(3, self.windowSize * 2, 2, 5)  
-        curses.curs_set(False)
-
-    def displayMessage(self, message):
-        self.messageWindow.clear()
-        self.messageWindow.addstr(1, (self.windowSize * 2 - len(message)) // 2, message, curses.A_BOLD)
-        self.messageWindow.refresh()
-
-    def clearMessage(self):
-        self.messageWindow.clear()
-        self.messageWindow.refresh()
-
-    def draw(self, snake, food):
-        self.gameWindow.clear()
-        for xy in snake.segments:
-            self.gameWindow.addch(xy[1], xy[0], 'x')
-        for food in food:
-            self.gameWindow.addch(food[1], food[0], 'o')
-        self.gameWindow.border()
-        self.gameWindow.refresh()
-
-    def maxY(self):
-        return self.gameWindow.getmaxyx()[0]
-    
-    def maxX(self):
-        return self.gameWindow.getmaxyx()[1]
-
 class Food:
     def __init__(self, maxX, maxY, excludedPositions):
         self.foodPositions = []  
@@ -96,30 +65,25 @@ class Food:
 class Game:
     def __init__(self):
         self.delayInSeconds = 0.25
-        self.window = Window()
+        self.window = Window(20)
         self.snake = Snake()
         self.food = Food(self.window.maxX(), self.window.maxY(), self.snake.segments)
+        self.window.onInputReceived(self.handleInput)
 
     def run(self):
         while(True):
-            self.getInput()
             self.update()
             time.sleep(self.delayInSeconds)
 
-    def getInput(self):
-        try:
-            while True:  
-                key = self.gameWindow.getkey()
-                if key == 'w':
-                    self.snake.setDirection("up")
-                elif key == 'a':
-                    self.snake.setDirection("left")
-                elif key == 's':
-                    self.snake.setDirection("down")
-                elif key == 'd':
-                    self.snake.setDirection("right")
-        except curses.error:
-            pass  
+    def handleInput(self, key):
+        if key == 'w':
+            self.snake.setDirection("up")
+        elif key == 'a':
+            self.snake.setDirection("left")
+        elif key == 's':
+            self.snake.setDirection("down")
+        elif key == 'd':
+            self.snake.setDirection("right")
 
     def update(self):
         self.snake.move()
@@ -129,7 +93,7 @@ class Game:
             return
             
         self.handleSnakeEat()
-        self.window.draw(self.snake, self.foodPositions)
+        self.updateWindow()
 
     def handleSnakeEat(self):
         snakeHead = self.snake.head()
@@ -151,19 +115,23 @@ class Game:
         elif snakeHead in self.snake.segments[1:] :
             return True
         return False
+    
+    def updateWindow(self):
+        self.window.clear()
+        self.window.draw(self.snake.segments, 'x')
+        self.window.draw(self.food.foodPositions, 'o')
+        self.window.render()
 
     def endGame(self):
         
         self.window.displayMessage("Game Over")
-        self.draw(self.snake, self.foodPositions)
+        self.updateWindow()
+
         time.sleep(3)
 
         self.window.clearMessage()
         self.snake = Snake()
-        self.food = Food()
-
-    
-
+        self.food = Food(self.window.maxX(), self.window.maxY(), self.snake.segments)
 
 
 def main(stdscr):
