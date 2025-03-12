@@ -56,8 +56,8 @@ class Window:
             self.input_thread.start()
 
 def windowWrapper(func):
-        try:
-            wrapper(func)
-        except KeyboardInterrupt:
-            curses.curs_set(True)
-            curses.endwin()
+    try:
+        curses.wrapper(lambda stdscr: func())
+    except KeyboardInterrupt:
+        curses.curs_set(True)  
+        

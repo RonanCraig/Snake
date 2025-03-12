@@ -134,7 +134,7 @@ class Game:
         self.food = Food(self.window.maxX(), self.window.maxY(), self.snake.segments)
 
 
-def main(stdscr):
+def main():
     game = Game()
     game.run()
 
