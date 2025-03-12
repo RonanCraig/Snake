@@ -1,4 +1,5 @@
 import curses, threading, time
+from curses import wrapper
 
 def _keyListener(window, callback):
     while True:
@@ -13,6 +14,7 @@ def _keyListener(window, callback):
 
 class Window:
     def __init__(self, size):
+        curses.initscr()
         self.windowSize = size
         self.gameWindow = curses.newwin(self.windowSize, self.windowSize * 2, 5, 5)
         self.gameWindow.border()
@@ -20,6 +22,7 @@ class Window:
         self.messageWindow = curses.newwin(3, self.windowSize * 2, 2, 5)
         curses.curs_set(False)
         self.input_thread = None
+        self.render()
 
     def displayMessage(self, message):
         self.messageWindow.clear()
@@ -51,3 +54,9 @@ class Window:
         if self.input_thread is None:
             self.input_thread = threading.Thread(target=_keyListener, args=(self.gameWindow, callback), daemon=True)
             self.input_thread.start()
+
+def windowWrapper(func):
+        try:
+            wrapper(func)
+        except KeyboardInterrupt:
+            exit(0)

@@ -1,6 +1,6 @@
 
 import time, random
-from curses import wrapper
+from window import windowWrapper
 from window import Window
 
 
@@ -71,7 +71,7 @@ class Game:
         self.window.onInputReceived(self.handleInput)
 
     def run(self):
-        while(True):
+        while True:
             self.update()
             time.sleep(self.delayInSeconds)
 
@@ -139,4 +139,4 @@ def main(stdscr):
     game.run()
 
 if __name__ == "__main__":
-    wrapper(main)
+    windowWrapper(main)
