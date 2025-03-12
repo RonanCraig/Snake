@@ -41,18 +41,64 @@ class Snake:
 
     def head(self):
         return self.segments[0]
-
-class Game:
+    
+class Window:
     def __init__(self):
-        self.delayInSeconds = 0.25
         self.windowSize = 20
         self.gameWindow = curses.newwin(self.windowSize, self.windowSize*2, 5, 5)
         self.gameWindow.border()
         self.gameWindow.nodelay(True)
+        self.messageWindow = curses.newwin(3, self.windowSize * 2, 2, 5)  
         curses.curs_set(False)
 
+    def displayMessage(self, message):
+        self.messageWindow.clear()
+        self.messageWindow.addstr(1, (self.windowSize * 2 - len(message)) // 2, message, curses.A_BOLD)
+        self.messageWindow.refresh()
+
+    def clearMessage(self):
+        self.messageWindow.clear()
+        self.messageWindow.refresh()
+
+    def draw(self, snake, food):
+        self.gameWindow.clear()
+        for xy in snake.segments:
+            self.gameWindow.addch(xy[1], xy[0], 'x')
+        for food in food:
+            self.gameWindow.addch(food[1], food[0], 'o')
+        self.gameWindow.border()
+        self.gameWindow.refresh()
+
+    def maxY(self):
+        return self.gameWindow.getmaxyx()[0]
+    
+    def maxX(self):
+        return self.gameWindow.getmaxyx()[1]
+
+class Food:
+    def __init__(self, maxX, maxY, excludedPositions):
+        self.foodPositions = []  
+        while len(self.foodPositions) < 3:
+            self.generateNewFood(maxX, maxY, excludedPositions)
+
+    def generateNewFood(self, maxX, maxY, excludedPositions):
+        while(True):
+            x = random.randint(1, maxX - 2)  
+            y = random.randint(1, maxY - 2)
+
+            if (x, y) not in self.foodPositions and [x, y] not in excludedPositions:
+                self.foodPositions.append((x, y))
+                break
+
+    def removeFood(self, pos):
+        self.foodPositions.remove(pos)
+
+class Game:
+    def __init__(self):
+        self.delayInSeconds = 0.25
+        self.window = Window()
         self.snake = Snake()
-        self.initFood()
+        self.food = Food(self.window.maxX(), self.window.maxY(), self.snake.segments)
 
     def run(self):
         while(True):
@@ -83,69 +129,40 @@ class Game:
             return
             
         self.handleSnakeEat()
-        self.Draw()
+        self.window.draw(self.snake, self.foodPositions)
 
     def handleSnakeEat(self):
         snakeHead = self.snake.head()
-        for food in self.foodPositions:
+        for food in self.food.foodPositions:
             if snakeHead[0] == food[0] and snakeHead[1] == food[1]:
                 self.snake.grow()
-                self.generateNewFood()
-                self.foodPositions.remove(food)
+                self.food.generateNewFood(self.window.maxX(), self.window.maxY(), self.snake.segments)
+                self.food.removeFood(food)
                 break
         
     def checkIsGameOver(self):
         snakeHead = self.snake.head()
         if snakeHead[0] <= 0 or snakeHead[1] <= 0 :
             return True
-        elif snakeHead[0] >= self.gameWindow.getmaxyx()[1] - 1 :
+        elif snakeHead[0] >= self.window.maxX() - 1 :
             return True
-        elif snakeHead[1] >= self.gameWindow.getmaxyx()[0] - 1 :
+        elif snakeHead[1] >= self.window.maxY() - 1 :
             return True
         elif snakeHead in self.snake.segments[1:] :
             return True
         return False
 
-    def Draw(self):
-        self.gameWindow.clear()
-        for xy in self.snake.segments:
-            self.gameWindow.addch(xy[1], xy[0], 'x')
-        for food in self.foodPositions:
-            self.gameWindow.addch(food[1], food[0], 'o')
-        self.gameWindow.border()
-        self.gameWindow.refresh()
-
     def endGame(self):
-        messageWindow = curses.newwin(3, self.windowSize * 2, 2, 5)  
-        messageWindow.clear()
-    
-        message = "Game Over"
-        messageWindow.addstr(1, (self.windowSize * 2 - len(message)) // 2, message, curses.A_BOLD)
-        messageWindow.refresh()
-
-        self.Draw()
+        
+        self.window.displayMessage("Game Over")
+        self.draw(self.snake, self.foodPositions)
         time.sleep(3)
 
-        messageWindow.clear()
-        messageWindow.refresh()
+        self.window.clearMessage()
         self.snake = Snake()
-        self.initFood()
+        self.food = Food()
 
-    def initFood(self):
-        self.foodPositions = []  
-        while len(self.foodPositions) < 3:
-            self.generateNewFood()
-
-    def generateNewFood(self):
-        max_y, max_x = self.gameWindow.getmaxyx() 
-
-        while(True):
-            x = random.randint(1, max_x - 2)  
-            y = random.randint(1, max_y - 2)
-
-            if (x, y) not in self.foodPositions and [x, y] not in self.snake.segments:
-                self.foodPositions.append((x, y))
-                break
+    
 
 
 
