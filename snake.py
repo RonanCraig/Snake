@@ -25,13 +25,15 @@ class Snake:
         self.segments.insert(0,front)
 
     def setDirection(self, direction):
-        if direction == "left" and self.direction == "right":
+        headX, headY = self.head()
+        nextSegX, nextSegY = self.segments[1]
+        if direction == "left" and headX == nextSegX + 1:
             return
-        elif direction == "right" and self.direction == "left":
+        elif direction == "right" and headX == nextSegX - 1:
             return
-        elif direction == "up" and self.direction == "down":
+        elif direction == "up" and headY == nextSegY + 1:
             return
-        elif direction == "down" and self.direction == "up":
+        elif direction == "down" and headY == nextSegY - 1:
             return
         self.direction = direction
 
@@ -69,11 +71,16 @@ class Game:
         self.snake = Snake()
         self.food = Food(self.window.maxX(), self.window.maxY(), self.snake.segments)
         self.window.onInputReceived(self.handleInput)
+        self.score = 0
+        self.bestScore = 0
 
     def run(self):
         while True:
             self.update()
             time.sleep(self.delayInSeconds)
+
+            if(self.snake.direction == "up" or self.snake.direction == "down"): 
+                time.sleep(self.delayInSeconds / 2)
 
     def handleInput(self, key):
         if key == 'w':
@@ -94,6 +101,17 @@ class Game:
             
         self.handleSnakeEat()
         self.updateWindow()
+        self.updateScoreText()
+
+    def increaseSpeed(self):
+        if(self.delayInSeconds <= 0.04):
+            self.delayInSeconds = 0.04
+            return
+
+        self.delayInSeconds -= 0.005
+
+    def updateScoreText(self):
+        self.window.displayMessage("Score: " + str(self.score) + "      Best: " + str(self.bestScore))
 
     def handleSnakeEat(self):
         snakeHead = self.snake.head()
@@ -102,6 +120,8 @@ class Game:
                 self.snake.grow()
                 self.food.generateNewFood(self.window.maxX(), self.window.maxY(), self.snake.segments)
                 self.food.removeFood(food)
+                self.score += 1
+                self.increaseSpeed()
                 break
         
     def checkIsGameOver(self):
@@ -127,7 +147,13 @@ class Game:
         self.window.displayMessage("Game Over")
         self.updateWindow()
 
-        time.sleep(3)
+        if self.score > self.bestScore:
+            self.bestScore = self.score
+        
+        self.score = 0
+        self.delayInSeconds = 0.25
+
+        time.sleep(1.5)
 
         self.window.clearMessage()
         self.snake = Snake()
