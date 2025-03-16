@@ -49,7 +49,7 @@ class Snake:
 class Food:
     def __init__(self, maxX, maxY, excludedPositions):
         self.foodPositions = []  
-        while len(self.foodPositions) < 3:
+        while len(self.foodPositions) < 5:
             self.generateNewFood(maxX, maxY, excludedPositions)
 
     def generateNewFood(self, maxX, maxY, excludedPositions):
