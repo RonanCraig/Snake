@@ -2,12 +2,14 @@
 import time, random
 from window import windowWrapper
 from window import Window
+from inputManager import InputManager
 
 
 class Snake:
     def __init__(self):
         self.segments = [[1,4],[1,3],[1,2],[1,1]]
         self.direction = "down"
+        self.PPMode = False
 
     def move(self):
         front = [self.segments[0][0], self.segments[0][1]]
@@ -46,6 +48,19 @@ class Snake:
     def head(self):
         return self.segments[0]
     
+    def getChar(self, segment):
+        if(self.PPMode is not True):
+            return 'x'
+        
+        if(segment == self.segments[0]):
+            return 'D'
+        if(segment == self.segments[-1]):
+            return '8'
+        return '='
+    
+    def activatePPMode(self):
+        self.PPMode = True
+    
 class Food:
     def __init__(self, maxX, maxY, excludedPositions):
         self.foodPositions = []  
@@ -68,9 +83,11 @@ class Game:
     def __init__(self):
         self.delayInSeconds = 0.25
         self.window = Window(20)
+        self.inputManager = InputManager(self.window)
         self.snake = Snake()
         self.food = Food(self.window.maxX(), self.window.maxY(), self.snake.segments)
-        self.window.onInputReceived(self.handleInput)
+        self.inputManager.onInputReceived(self.handleInput)
+        self.inputManager.onWordRecieved("ppmode", lambda : self.snake.activatePPMode())
         self.score = 0
         self.bestScore = 0
 
@@ -112,6 +129,7 @@ class Game:
 
     def updateScoreText(self):
         self.window.displayMessage("Score: " + str(self.score) + "      Best: " + str(self.bestScore))
+        self.window.displayMessage(self.inputManager.getPreviousInputs())
 
     def handleSnakeEat(self):
         snakeHead = self.snake.head()
@@ -138,7 +156,10 @@ class Game:
     
     def updateWindow(self):
         self.window.clear()
-        self.window.draw(self.snake.segments, 'x')
+
+        for segment in self.snake.segments:
+            self.window.draw(segment, self.snake.getChar(segment))
+
         self.window.draw(self.food.foodPositions, 'o')
         self.window.render()
 

@@ -1,16 +1,5 @@
-import curses, threading, time
+import curses
 from curses import wrapper
-
-def _keyListener(window, callback):
-    while True:
-        key = window.getch()
-        if key != -1: 
-            try:
-                char = chr(key)  
-                callback(char)
-            except ValueError:
-                pass  
-        time.sleep(0.01)  
 
 class Window:
     def __init__(self, size):
@@ -21,7 +10,6 @@ class Window:
         self.gameWindow.nodelay(True)
         self.messageWindow = curses.newwin(3, self.windowSize * 2, 2, 5)
         curses.curs_set(False)
-        self.input_thread = None
         self.render()
 
     def displayMessage(self, message):
@@ -34,8 +22,11 @@ class Window:
         self.messageWindow.refresh()
 
     def draw(self, positions, character):
-        for xy in positions:
-            self.gameWindow.addch(xy[1], xy[0], character)
+        if isinstance(positions[0], (list, tuple)):  
+            for xy in positions:
+                self.gameWindow.addch(xy[1], xy[0], character)
+        else:  
+            self.gameWindow.addch(positions[1], positions[0], character)
 
     def clear(self):
         self.gameWindow.erase()
@@ -50,10 +41,9 @@ class Window:
     def maxX(self):
         return self.gameWindow.getmaxyx()[1]
     
-    def onInputReceived(self, callback):
-        if self.input_thread is None:
-            self.input_thread = threading.Thread(target=_keyListener, args=(self.gameWindow, callback), daemon=True)
-            self.input_thread.start()
+    def getch(self):
+        return self.gameWindow.getch()
+
 
 def windowWrapper(func):
     try:
