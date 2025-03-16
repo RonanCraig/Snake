@@ -129,7 +129,6 @@ class Game:
 
     def updateScoreText(self):
         self.window.displayMessage("Score: " + str(self.score) + "      Best: " + str(self.bestScore))
-        self.window.displayMessage(self.inputManager.getPreviousInputs())
 
     def handleSnakeEat(self):
         snakeHead = self.snake.head()
